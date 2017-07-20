@@ -1,23 +1,17 @@
 
 import {
-  ServicePlan,
-  PaymentRecord,
+  Payment,
 } from '../models';
 
 // payment classes
 import {
   PaymentClass,
-  PaymentMethodClass,
-  SubscriptionClass,
-  ServicePlanClass,
   WebhookClass,
 } from '../classes/payment';
 
 // payment routes
 import {
   PaymentRoutes,
-  PaymentMethodRoutes,
-  SubscriptionRoutes,
   WebhookRoutes,
 } from '../routes/payment';
 
@@ -38,12 +32,7 @@ export default function ({
   /** GET /health-check - Check service health */
   router.get('/', (req, res) => res.send('hello world!'));
 
-  const ServicePlanModel = ServicePlan({
-    mongoose,
-    APIError,
-    ErrorCode,
-  });
-  const PaymentRecordModel = PaymentRecord({
+  const PaymentModel = Payment({
     mongoose,
     APIError,
     ErrorCode,
@@ -55,32 +44,12 @@ export default function ({
     braintreeGateway,
     paypalGateway,
   });
-  const paymentMethod = new PaymentMethodClass({
-    APIError,
-    ErrorCode,
-    braintreeGateway,
-    paypalGateway,
-  });
-  const subscription = new SubscriptionClass({
-    APIError,
-    ErrorCode,
-    braintreeGateway,
-    paypalGateway,
-    ServicePlanModel,
-    PaymentRecordModel,
-  });
   const webhook = new WebhookClass({
     APIError,
     ErrorCode,
     braintreeGateway,
     paypalGateway,
-    ServicePlanModel,
-    PaymentRecordModel,
-  });
-  const servicePlan = new ServicePlanClass({
-    APIError,
-    ErrorCode,
-    ServicePlanModel,
+    PaymentModel
   });
 
   const paymentR = new PaymentRoutes({
@@ -88,18 +57,6 @@ export default function ({
     validate,
     ParamValidation,
     payment,
-  });
-  const paymentMethodR = new PaymentMethodRoutes({
-    express,
-    validate,
-    ParamValidation,
-    paymentMethod,
-  });
-  const subscriptionR = new SubscriptionRoutes({
-    express,
-    validate,
-    ParamValidation,
-    subscription,
   });
   const webhookR = new WebhookRoutes({
     express,
@@ -109,8 +66,6 @@ export default function ({
   });
 
   router.use('/payment', paymentR);
-  router.use('/paymentMethod', paymentMethodR);
-  router.use('/subscription', subscriptionR);
   router.use('/webhook', webhookR);
 
   return router;

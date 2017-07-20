@@ -9,7 +9,6 @@ export default function ({
 
   router.route('/clientToken')
     .get(payment.genClientToken());
-    // .get(validate(paramValidation.filterCoupon), couponCtrl.list);
 
   return router;
 }

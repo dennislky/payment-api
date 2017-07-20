@@ -36,7 +36,7 @@ export default class {
     const app = express();
     this.app = app;
 
-    if (config.get('env') === 'development') {
+    if (config.get('env') === 'dev') {
       app.use(logger('dev'));
     }
 
@@ -86,7 +86,6 @@ export default class {
 
     // if error is not an instanceOf APIError, convert it.
     app.use((err, req, res, next) => {
-      // console.log("errrr", err);
       if (err instanceof validate.ValidationError) {
         // validation error contains errors which is an array of error each containing message[]
         const unifiedErrorMessage = err.errors.map(error => error.messages.join('. ')).join(' and ');

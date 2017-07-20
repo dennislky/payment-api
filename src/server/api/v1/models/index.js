@@ -1,7 +1,5 @@
-import ServicePlan from './servicePlan.model';
-import PaymentRecord from './paymentRecord.model';
+import Payment from './payment.model';
 
 export {
-  ServicePlan,
-  PaymentRecord,
+  Payment,
 };

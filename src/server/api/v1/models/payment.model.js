@@ -5,24 +5,22 @@ export default function({
   APIError,
   ErrorCode,
 }) {
-  const PaymentRecordSchema = new mongoose.Schema({
-    paymentItem: {
+  const PaymentSchema = new mongoose.Schema({
+    name: {
       type: String,
       required: true,
     },
-    amount: {
+    phone: {
+      type: String,
+      required: true,
+    },
+    currency: {
+      type: String,
+      required: true,
+    },
+    price: {
       type: Number,
       required: true,
-    },
-    status: {
-      type: String,
-      enum: ['paid', 'unpaid'],
-      required: true,
-      default: 'unpaid',
-    },
-    payTime: {
-      type: Date,
-      default: Date.now,
     },
     createdAt: {
       type: Date,
@@ -41,7 +39,7 @@ export default function({
     },
   );
 
-  PaymentRecordSchema.set('toObject', {
+  PaymentSchema.set('toObject', {
     transform: function t(doc, ret) {
       const value = ret;
       value.id = value._id;
@@ -50,7 +48,7 @@ export default function({
     },
   });
 
-  PaymentRecordSchema.statics = {
+  PaymentSchema.statics = {
     count(filter = {}) {
       return this.find(filter)
         .count();
@@ -59,34 +57,32 @@ export default function({
     detail({ filter = {} }) {
       return this.findOne(filter)
         .exec()
-        .then((paymentRecord) => {
-          if (paymentRecord) {
-            return paymentRecord;
+        .then((payment) => {
+          if (payment) {
+            return payment;
           }
           const err = new APIError('Payment record not found', 404, ErrorCode.NOT_FOUND, true);
           return Promise.reject(err);
         });
     },
 
-    createPaymentRecord({ paymentRecordData }) {
-      const paymentRecordObj = _.pick(paymentRecordData, [
-        'paymentItem',
-        'merchant',
-        'amount',
-        'referenceNo',
-        'status',
-        'payTime',
+    createPayment({ paymentData }) {
+      const paymentObj = _.pick(paymentData, [
+        'name',
+        'phone',
+        'currency',
+        'price',
       ]);
 
-      const paymentRecord = new this(paymentRecordObj);
+      const payment = new this(paymentObj);
 
-      return paymentRecord
+      return payment
         .save()
         .then((result) => {
           if (result) {
             return result;
           }
-          const err = new APIError('Fail to create payment record', 500, ErrorCode.NOT_FOUND, true);
+          const err = new APIError('Fail to create payment', 500, ErrorCode.NOT_FOUND, true);
           return Promise.reject(err);
         })
         .catch(err => Promise.reject(err));
@@ -94,16 +90,15 @@ export default function({
 
     list({ skip = 0, first = 10, sortName = 'createdAt', sortOrder = 'desc', filter = {} } = {}) {
       return this.find(filter)
-        .populate('shop.id')
         .limit(first)
         .skip(skip)
         .sort({ [sortName]: (sortOrder === 'asc' ? 1 : -1) })
         .exec()
-        .then((paymentRecords) => {
-          if (paymentRecords) {
-            return paymentRecords;
+        .then((payments) => {
+          if (payments) {
+            return payments;
           }
-          const err = new APIError('Fetch payment record list error', 500, ErrorCode.NOT_FOUND, true);
+          const err = new APIError('Fetch payment list error', 500, ErrorCode.NOT_FOUND, true);
           return Promise.reject(err);
         })
         .catch(err => Promise.reject(err));
@@ -116,11 +111,11 @@ export default function({
           if (status.ok === 1 && status.nModified === 1) {
             return true;
           }
-          const err = new APIError('Cannot update payment record', 500, ErrorCode.NOT_FOUND, true);
+          const err = new APIError('Cannot update payment', 500, ErrorCode.NOT_FOUND, true);
           return Promise.reject(err);
         });
     },
   };
 
-  return mongoose.model('PaymentRecord', PaymentRecordSchema, 'paymentRecords');
+  return mongoose.model('Payment', PaymentSchema, 'payments');
 }
