@@ -43,6 +43,7 @@
     "cookie-parser": "^1.4.3",
     "cors": "^2.8.3",
     "express": "^4.14.0",
+    "express-handlebars": "^3.0.0",
     "express-validation": "^1.0.2",
     "helmet": "^3.6.1",
     "http-status": "^1.0.1",

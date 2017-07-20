@@ -2,35 +2,47 @@ export default class {
   constructor({
     APIError,
     ErrorCode,
-    gateway,
+    braintreeGateway,
+    paypalGateway,
   }) {
     Object.assign(this, {
       APIError,
       ErrorCode,
-      gateway,
+      braintreeGateway,
+      paypalGateway,
     });
+  }
+
+  getMakePaymentForm() {
+    return async (req, res, next) => {
+      try {
+        return res.render('makePaymentForm', {
+          layout: 'makePaymentForm',
+        });
+      } catch (e) {
+        const err = new this.APIError('Fail to get make payment form', 500, this.ErrorCode.MAKE_PAYMENT_FORM_ERROR, true);
+        return next(err);
+      }
+    };
+  }
+
+  getPaymentCheckingForm() {
+    return async (req, res, next) => {
+      try {
+        return res.render('paymentCheckingForm', {
+          layout: 'paymentCheckingForm',
+        });
+      } catch (e) {
+        const err = new this.APIError('Fail to get payment checking form', 500, this.ErrorCode.PAYMENT_CHECKING_FORM_ERROR, true);
+        return next(err);
+      }
+    };
   }
 
   genClientToken() {
     return async (req, res, next) => {
-      let braintreeResult;
       try {
-        braintreeResult = await this.gateway.customer.find(req.user.id);
-      } catch (e) {
-        braintreeResult = await this.gateway.customer.create({
-          id: req.user.id,
-          // email: req.user.email,
-        });
-        if (!braintreeResult.success) {
-          const err = new this.APIError(braintreeResult.message, 500, this.ErrorCode.BRAINTREE_ERROR, true);
-          return next(err);
-        }
-      }
-
-      try {
-        braintreeResult = await this.gateway.clientToken.generate({
-          customerId: req.user.id,
-        });
+        const braintreeResult = await this.braintreeGateway.clientToken.generate({});
         if (!braintreeResult.success) {
           const err = new this.APIError(braintreeResult.message, 500, this.ErrorCode.BRAINTREE_ERROR, true);
           return next(err);

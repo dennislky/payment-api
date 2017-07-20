@@ -1,86 +1,100 @@
 <div id="app">
   <form method="post"> <!--- form --->
-    <fieldset> <!--- set-5 -->
-      <legend>聯絡人</legend>
-      <input id="name" type="text" value="" name="name" placeholder="姓名" ref="name">
-      <input id="phone" type="text" value="" name="phone" placeholder="手提電話" ref="phone">
-    </fieldset> <!-- /.end set-5 -->
+    <fieldset> <!--- set-1 -->
+      <legend>Order</legend>
+      <input id="name" type="text" value="" name="name" placeholder="Customer Name" ref="name">
+      <input id="phone" type="text" value="" name="phone" placeholder="Customer Phone Number" ref="phone">
+      <select id="currency" class="primary select-img" name="currency" v-on:change="onCurrencyChange" v-model="currencySelected">
+        <option disabled value="">Please choose a currency</option>
+        <option v-for="item in currencies" v-bind:value="item">\{{item}}</option>
+      </select>
+      <input id="price" type="text" value="" name="price" placeholder="Price" ref="price">
+    </fieldset> <!-- /.end set-1 -->
+
+    <fieldset> <!--- set-2 -->
+      <legend>Payment</legend>
+      <input id="creditCardName" type="text" value="" name="creditCardName" placeholder="Credit Card Holder Name" ref="creditCardName">
+      <input id="creditCardNumber" type="text" value="" name="creditCardNumber" placeholder="Credit Card Number" ref="creditCardNumber">
+      <input id="creditCardExp" type="text" value="" name="creditCardExp" placeholder="Credit Card Expiration" ref="creditCardExp">
+      <input id="CVV" type="text" value="" name="CVV" placeholder="Credit Card CVV" ref="CVV">
+    </fieldset> <!-- /.end set-2 -->
 
     <div class="wrapper">
-    <button type="submit" v-on:click="onSubmit">立即預約</button>
+      <button type="submit" v-on:click="onSubmit">Make Payment</button>
     </div>
   </form> <!-- /.end form -->
 </div>
 <script>
   (function(){
+    var createClient = braintree.client.create;
     var app = new Vue({
       el: '#app',
       data: {
-        token: '{{token}}',
-        regionSelected: '',
-        districtSelected: '',
-        extraServiceSelected: []
+        clientToken: '',
+        currencies: ['HKD', 'USD', 'AUD', 'EUR', 'JPY', 'CNY'],
+        currencySelected: '',
+        nonce: ''
       },
       methods: {
-        fetchDistrictData: function(region) {
-          this.$http.get(`/v1/service/lazy/districts/${region}`, {
-            headers: {
-              'login-token': '{{token}}'
-            }
-          }).then(res => {
-            this.districts = res.data.data
-            this.districtSelected = ''
-          });
-        },
-        fetchExtraServiceData: function(addressType) {
-          this.$http.get(`/v1/service/lazy/extraServices/${addressType}`, {
-            headers: {
-              'login-token': '{{token}}'
-            }
-          }).then(res => {
-            this.extraServices = res.data.data
-            this.extraServiceSelected = ''
-          });
-        },
-        onRegionChange: function(e) {
-          this.regionSelected = e.target.value
-          this.fetchDistrictData(this.regionSelected)
-        },
-        onDistrictChange: function(e) {
-          this.districtSelected = e.target.value
-        },
-        onExtraServiceChange: function(e) {
-          console.log(e.target.value)
-          this.extraServiceSelected.push(e.target.value)
-        },
         load: function() {
-          this.fetchDistrictData(this.regions[0])
-          this.fetchExtraServiceData(this.addressType)
-          const now = new Date()
-          const date = new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,16)
-          this.$refs.datetime.value = date
-          this.$refs.datetime.min = date
+          this.getClientToken()
+        },
+        getClientToken: function() {
+          this.$http
+            .get(`/v1/payment/clientToken`, {})
+            .then(res => {
+              this.clientToken = res.data.data.clientToken
+            });
+        },
+        onCurrencyChange: function(e) {
+          this.currencySelected = e.target.value
+          console.log(this.currencySelected)
         },
         onSubmit: function(e) {
           e.preventDefault()
-          const formData = {
-            duration: this.hour*3600,
-            datetime: this.$refs.datetime.value,
-            extraServices: this.extraServiceSelected.slice(0, -1),
-            region: this.regionSelected,
-            district: this.districtSelected,
-            address: this.$refs.address.value,
-            name: this.$refs.name.value,
-            phone: this.$refs.phone.value
-          }
-          console.log(JSON.stringify(formData))
-          this.$http.post(`/v1/service/detail/${this.catId}/${this.serviceId}/form/${this.addressType}`, JSON.stringify(formData), {
-            headers: {
-              'login-token': '{{token}}',
-            }
-          }).then(res => {
-            console.log(res)
-          })
+          createClient.bind(this)
+          createClient({
+            authorization: this.clientToken,
+          }, function (createErr, clientInstance) {
+            var data = {
+              creditCard: {
+                number: document.getElementById('creditCardNumber').value,
+                cvv: document.getElementById('CVV').value,
+                expirationDate: document.getElementById('creditCardExp').value,
+                options: {
+                  validate: true
+                }
+              }
+            };
+            console.log(data)
+
+            // Warning: For a merchant to be eligible for the easiest level of PCI compliance (SAQ A),
+            // payment fields cannot be hosted on your checkout page.
+            // For an alternative to the following, use Hosted Fields.
+            clientInstance.request({
+              endpoint: 'payment_methods/credit_cards',
+              method: 'post',
+              data: data
+            }, function (requestErr, response) {
+              // More detailed example of handling API errors: https://codepen.io/braintree/pen/MbwjdM
+              if (requestErr) { throw new Error(requestErr); }
+              console.log('Got nonce:', response.creditCards[0].nonce);
+              this.nonce = response.creditCards[0].nonce
+              const formData = {
+                name: document.getElementById('name').value,
+                phone: document.getElementById('phone').value,
+                currency: document.getElementById('currency').value,
+                price: document.getElementById('price').value,
+                nonce: this.nonce,
+              }
+              // console.log(JSON.stringify(formData))
+              Vue.http
+                .post(`/v1/payment`, JSON.stringify(formData), {})
+                .then(res => {
+                  console.log(res)
+                })
+            });
+          });
         }
       }
     });

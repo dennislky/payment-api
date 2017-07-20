@@ -1,74 +1,49 @@
-
 import braintree from 'braintree';
 
 export default class {
   constructor({
     APIError,
     ErrorCode,
-    gateway,
-    ServicePlanModel,
-    PaymentRecordModel,
+    braintreeGateway,
+    paypalGateway,
+    PaymentModel,
   }) {
     Object.assign(this, {
       APIError,
       ErrorCode,
-      gateway,
-      ServicePlanModel,
-      PaymentRecordModel,
+      braintreeGateway,
+      paypalGateway,
+      PaymentModel,
     });
   }
 
   async subscriptionWentActive({ subscription }) {
     this.subscription = subscription;
-    let servicePlan;
-    let paymentRecord;
+    let payment;
     let result;
     let braintreeResult;
-    try {
-      servicePlan = await this.ServicePlanModel.detail({ filter: {
-        'shop.subscriptionId': subscription.id,
-      } });
-      console.log(this.subscription, servicePlan);
-    } catch (err) {
-      console.log(err);
-      return false;
-    }
 
     try {
-      braintreeResult = await this.gateway.subscription.find(this.subscription.id);
+      braintreeResult = await this.braintreeGateway.subscription.find(this.subscription.id);
       console.log(braintreeResult);
     } catch (err) {
       console.log(err);
       return false;
     }
 
-    const paymentRecordData = {
-      paymentItem: 'subscription_fee',
-      merchant: servicePlan.merchant,
-      amount: braintreeResult.price,
-      referenceNo: 'N/A',
-      status: 'paid',
-      payTime: braintreeResult.updatedAt,
+    const paymentData = {
+      name: '',
+      phone: '',
+      currency: '',
+      price: braintreeResult.price,
     };
-    console.log(paymentRecordData);
+    console.log(paymentData);
 
     try {
-      paymentRecord = await this.PaymentRecordModel.createPaymentRecord({
-        paymentRecordData,
+      payment = await this.PaymentModel.createPayment({
+        paymentData,
       });
-      console.log(paymentRecord);
-    } catch (err) {
-      console.log(err);
-      return false;
-    }
-
-    try {
-      result = await this.ServicePlanModel.updateData({
-        _id: servicePlan.id,
-      }, {
-        $push: { paymentRecord: paymentRecord.id },
-      });
-      console.log(result);
+      console.log(payment);
     } catch (err) {
       console.log(err);
       return false;
@@ -79,7 +54,7 @@ export default class {
 
   subscriptionAction() {
     return async (req, res) => {
-      this.gateway.webhookNotification.parse(
+      this.braintreeGateway.webhookNotification.parse(
         req.body.bt_signature,
         req.body.bt_payload,
         async (err, webhookNotification) => {
@@ -105,7 +80,7 @@ export default class {
   testWebhook() {
     return async (req, res) => {
       const { id } = req.query;
-      const sampleNotification = this.gateway.webhookTesting.sampleNotification(
+      const sampleNotification = this.braintreeGateway.webhookTesting.sampleNotification(
         braintree.WebhookNotification.Kind.SubscriptionWentActive,
         id,
       );

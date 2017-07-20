@@ -7,6 +7,8 @@ import methodOverride from 'method-override';
 import cors from 'cors';
 import httpStatus from 'http-status';
 import helmet from 'helmet';
+import path from 'path';
+import exphbs from 'express-handlebars'
 import apiV1 from '../server/api/v1/routes/index.route';
 
 export default class {
@@ -83,6 +85,15 @@ export default class {
     });
 
     app.use('/v1', v1);
+
+    app.use('/css', express.static(path.join(__dirname, '../css')))
+    app.use('/img', express.static(path.join(__dirname, '../img')))
+
+    app.engine("handlebars", exphbs({
+        extname:"handlebars"
+    }))
+
+    app.set("view engine", "handlebars")
 
     // if error is not an instanceOf APIError, convert it.
     app.use((err, req, res, next) => {

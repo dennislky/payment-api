@@ -28,7 +28,7 @@ body {
 }
 
 .primary {
-     width: 35%;
+     width: 95%;
      margin-right: 5%;
 }
 
@@ -36,8 +36,6 @@ body {
      width: 60%;
      margin-left: -0.2em;
 }
-
-
 
 /* ----------------------------
   FORM STYLE
@@ -99,7 +97,7 @@ input[type="datetime-local"],
 #counter,
 textarea,
 select {
-  width: 100%;
+  width: 95%;
   height: auto;
   border-style: none;
   border-bottom: 1px solid #a7a7ab;
