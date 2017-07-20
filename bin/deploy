@@ -1,0 +1,30 @@
+#!/bin/bash
+
+export AWS_ACCESS_KEY_ID_NAME="${ENV}_AWS_ACCESS_KEY_ID"
+eval "export AWS_ACCESS_KEY_ID=\${$AWS_ACCESS_KEY_ID_NAME}"
+
+export AWS_SECRET_ACCESS_KEY_NAME="${ENV}_AWS_SECRET_ACCESS_KEY"
+eval "export AWS_SECRET_ACCESS_KEY=\${$AWS_SECRET_ACCESS_KEY_NAME}"
+
+export AWS_REGION_NAME="${ENV}_AWS_REGION"
+eval "export AWS_REGION=\${$AWS_REGION_NAME}"
+
+export BUCKET_NAME="${ENV}_BUCKET"
+eval "export BUCKET=\${$BUCKET_NAME}"
+
+export APP_NAME_NAME="${ENV}_APP_NAME"
+eval "export APP_NAME=\${$APP_NAME_NAME}"
+
+export ENV_NAME_NAME="${ENV}_ENV_NAME"
+eval "export ENV_NAME=\${$ENV_NAME_NAME}"
+
+export NOW=$(date +%s)
+export SHA1=$(echo $CIRCLE_SHA1 | cut -c1-8)
+export S3_KEY="versions/$NOW-$SHA1.zip"
+export VERSION="$NOW-$SHA1"
+
+aws s3 cp dist.zip "s3://$BUCKET/$S3_KEY"
+
+aws elasticbeanstalk create-application-version --application-name "$APP_NAME" --version-label "$VERSION" --source-bundle S3Bucket="$BUCKET",S3Key="$S3_KEY" --region "$AWS_REGION"
+
+aws elasticbeanstalk update-environment --environment-name "$ENV_NAME" --version-label "$VERSION" --region "$AWS_REGION"

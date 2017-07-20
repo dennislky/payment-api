@@ -1,0 +1,15 @@
+# deps
+node_modules
+
+# macOS
+.DS_Store
+
+# build
+dist/
+dist.zip
+uploads/
+
+# configs
+dev*.js
+uat*.js
+prod*.js

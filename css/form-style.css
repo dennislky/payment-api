@@ -1,0 +1,195 @@
+
+
+/* ----------------------------
+  GENERAL STYLE
+---------------------------- */
+
+*, *:before, *:after {
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Nunito', sans-serif;
+  color: #384047;
+}
+
+/* --- Container --- */
+
+.wrapper {
+  padding-right: 30px;
+}
+
+.col {
+     display: inline-block;
+     float: right;
+     width:100%;
+}
+
+.primary {
+     width: 35%;
+     margin-right: 5%;
+}
+
+.secondary {
+     width: 60%;
+     margin-left: -0.2em;
+}
+
+
+
+/* ----------------------------
+  FORM STYLE
+---------------------------- */
+
+form {
+  /*max-width: 300px;*/
+  background: #f4f7f8;
+  border-radius: 0px;
+  margin: 0 auto;
+  padding: 60px 0 10px 30px;
+}
+
+/* --- Fieldset --- */
+
+fieldset {
+  padding: 0;
+  border: none;
+  margin: 10px 0 0;
+}
+
+/* --- Label, Legend --- */
+
+label,
+legend {
+  color: #C4101C;
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 300;
+}
+
+label.light {
+  font-weight: 300;
+  display: inline;
+}
+
+#counter-label {
+  font-size: 0.6em;
+  font-weight: 300;
+}
+
+legend {
+  font-size: 1em;
+}
+
+/* --- Field --- */
+
+input[type="text"],
+input[type="password"],
+input[type="date"],
+input[type="datetime"],
+input[type="email"],
+input[type="number"],
+input[type="search"],
+input[type="tel"],
+input[type="time"],
+input[type="url"],
+input[type="datetime-local"],
+#counter,
+textarea,
+select {
+  width: 100%;
+  height: auto;
+  border-style: none;
+  border-bottom: 1px solid #a7a7ab;
+  background-color: #f4f7f8;
+  color: #8f8f8f;
+  font-size: 1.6em;
+  outline: 0;
+  margin: 0;
+  margin-bottom: 30px;
+  padding: 15px 0;
+}
+
+input::placeholder {
+  color: #8f8f8f;
+}
+
+input[type="radio"],
+input[type="checkbox"] {
+  margin: 0 4px 8px 0;
+}
+
+#timemsgbox {
+  background-color: #f4f7f8;
+  width: 78%;
+}
+
+/* --- Button --- */
+
+button {
+  padding: 19px 39px 18px 39px;
+  color: #FFF;
+  background-color: #b41437;
+  font-size: 18px;
+  text-align: center;
+  font-style: normal;
+  border-radius: 5px;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+button:hover {
+  background-color: #a50024;
+}
+
+/* remove default style */
+
+select {
+  -webkit-appearance: none;
+  -webkit-border-radius: 0px;
+}
+
+input, button, submit {
+  border:none;
+}
+
+
+
+/* ----------------------------
+  IMAGES
+---------------------------- */
+
+/* --- select field --- */
+
+.select-img {
+  background-image: url("../img/arrow_down_grey_small@3x.png");
+  background-position: 100% center;
+  background-repeat: no-repeat;
+  background-size: 20px;
+}
+
+/* --- counter --- */
+
+input[type="image"]{
+    width: 3.1rem;
+    margin-bottom: -6px;
+    margin-right: 1px;
+}
+
+
+
+/* ----------------------------
+  MEDIA : LARGER SCREEN
+---------------------------- */
+
+@media screen and (min-width: 480px) {
+
+  form {
+    max-width: 480px;
+    margin: 30px auto;
+    border-radius: 8px;
+  }
+
+}

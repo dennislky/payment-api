@@ -1,0 +1,17 @@
+#!/bin/bash
+
+./node_modules/.bin/gulp dist:build
+
+ln package.json ./dist
+cd dist && yarn install --production
+
+zip -r dist.zip *
+
+# copy to CircleCI artifacts directory
+if [ $CIRCLE_ARTIFACTS ] && [ -d $CIRCLE_ARTIFACTS ]; then
+  cp dist.zip $CIRCLE_ARTIFACTS
+else
+  echo 'no artifacts directory, skipping...'
+fi
+
+mv dist.zip ..

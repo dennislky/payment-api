@@ -1,0 +1,89 @@
+<div id="app">
+  <form method="post"> <!--- form --->
+    <fieldset> <!--- set-5 -->
+      <legend>聯絡人</legend>
+      <input id="name" type="text" value="" name="name" placeholder="姓名" ref="name">
+      <input id="phone" type="text" value="" name="phone" placeholder="手提電話" ref="phone">
+    </fieldset> <!-- /.end set-5 -->
+
+    <div class="wrapper">
+    <button type="submit" v-on:click="onSubmit">立即預約</button>
+    </div>
+  </form> <!-- /.end form -->
+</div>
+<script>
+  (function(){
+    var app = new Vue({
+      el: '#app',
+      data: {
+        token: '{{token}}',
+        regionSelected: '',
+        districtSelected: '',
+        extraServiceSelected: []
+      },
+      methods: {
+        fetchDistrictData: function(region) {
+          this.$http.get(`/v1/service/lazy/districts/${region}`, {
+            headers: {
+              'login-token': '{{token}}'
+            }
+          }).then(res => {
+            this.districts = res.data.data
+            this.districtSelected = ''
+          });
+        },
+        fetchExtraServiceData: function(addressType) {
+          this.$http.get(`/v1/service/lazy/extraServices/${addressType}`, {
+            headers: {
+              'login-token': '{{token}}'
+            }
+          }).then(res => {
+            this.extraServices = res.data.data
+            this.extraServiceSelected = ''
+          });
+        },
+        onRegionChange: function(e) {
+          this.regionSelected = e.target.value
+          this.fetchDistrictData(this.regionSelected)
+        },
+        onDistrictChange: function(e) {
+          this.districtSelected = e.target.value
+        },
+        onExtraServiceChange: function(e) {
+          console.log(e.target.value)
+          this.extraServiceSelected.push(e.target.value)
+        },
+        load: function() {
+          this.fetchDistrictData(this.regions[0])
+          this.fetchExtraServiceData(this.addressType)
+          const now = new Date()
+          const date = new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,16)
+          this.$refs.datetime.value = date
+          this.$refs.datetime.min = date
+        },
+        onSubmit: function(e) {
+          e.preventDefault()
+          const formData = {
+            duration: this.hour*3600,
+            datetime: this.$refs.datetime.value,
+            extraServices: this.extraServiceSelected.slice(0, -1),
+            region: this.regionSelected,
+            district: this.districtSelected,
+            address: this.$refs.address.value,
+            name: this.$refs.name.value,
+            phone: this.$refs.phone.value
+          }
+          console.log(JSON.stringify(formData))
+          this.$http.post(`/v1/service/detail/${this.catId}/${this.serviceId}/form/${this.addressType}`, JSON.stringify(formData), {
+            headers: {
+              'login-token': '{{token}}',
+            }
+          }).then(res => {
+            console.log(res)
+          })
+        }
+      }
+    });
+    app.load();
+  })()
+</script>

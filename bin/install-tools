@@ -1,0 +1,6 @@
+#!/bin/bash
+
+yarn config set registry https://registry.npmjs.org/
+
+# python/pip
+pip install --upgrade pip

@@ -1,0 +1,40 @@
+machine:
+  pre:
+    - mkdir ~/.yarn-cache
+  python:
+    version: 2.7.12
+  node:
+    version: 6.10.0
+
+dependencies:
+  pre:
+    - ./bin/install-tools
+  override:
+    - yarn
+    - pip install --upgrade -r requirements.txt
+  cache_directories:
+    - ~/.yarn-cache
+
+test:
+  override:
+    - yarn test
+
+deployment:
+  develop:
+    branch: master
+    commands:
+      - yarn run build
+      - ENV=DEV yarn run deploy
+      - ENV=DEV yarn run cleanup
+  uat:
+    tag: /^\d+\.\d+\.\d+$/
+    commands:
+      - yarn run build
+      - ENV=UAT yarn run deploy
+      - ENV=UAT yarn run cleanup
+  prod:
+    branch: /^\d+\.\d+\-stable$/
+    commands:
+      - yarn run build
+      - ENV=PROD yarn run deploy
+      - ENV=PROD yarn run cleanup

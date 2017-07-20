@@ -1,0 +1,79 @@
+#!/usr/bin/env node
+
+'use strict'
+
+const config = require('config')
+const AWS = require('aws-sdk')
+
+const env = process.env.ENV
+
+const accessKeyId = process.env[`${env}_AWS_ACCESS_KEY_ID`] || config.get('accessKeyId')
+const secretAccessKey = process.env[`${env}_AWS_SECRET_ACCESS_KEY`] || config.get('secretAccessKey')
+const region = process.env[`${env}_AWS_REGION`] || config.get('region')
+
+const applicationName = process.env[`${env}_APP_NAME`]
+
+AWS.config.update({
+  accessKeyId,
+  secretAccessKey,
+  region
+})
+
+const eb = new AWS.ElasticBeanstalk()
+const s3 = new AWS.S3()
+
+function getVersions(eb, appName) {
+  return new Promise((resolve, reject) => {
+    eb.describeApplicationVersions({
+      ApplicationName: appName
+    }, (err, data) => {
+      if (err != null) {
+        return reject(err)
+      }
+      resolve(data.ApplicationVersions)
+    })
+  })
+}
+
+function deleteVersion(eb, appName, version) {
+  return new Promise((resolve, reject) => {
+    eb.deleteApplicationVersion({
+      ApplicationName: appName,
+      DeleteSourceBundle: true,
+      VersionLabel: version
+    }, (err, data) => {
+      if (err != null) {
+        console.warn(err.stack)
+      }
+      // always resolve, ignore all error (idempotent operation)
+      resolve()
+    })
+  })
+}
+
+function buildVersions(allVersions) {
+  if (allVersions.length <= 5) {
+    return []
+  }
+
+  let retval = allVersions.sort((a, b) => {
+    const dateA = Date.parse(a.DateUpdated)
+    const dateB = Date.parse(b.DateUpdated)
+    return dateB - dateA
+  })
+  retval.splice(0, 5)
+  return retval
+}
+
+console.log('cleaning up, keeping at most 5 latest versions')
+getVersions(eb, applicationName)
+.then((allVersions) => {
+  const versions = buildVersions(allVersions)
+
+  Promise.all(versions.map((appVersion) => {
+    return deleteVersion(eb, appVersion.ApplicationName, appVersion.VersionLabel)
+  }))
+  .then(() => {
+    console.log('cleanup done.')
+  })
+})
