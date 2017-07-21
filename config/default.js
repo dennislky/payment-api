@@ -18,12 +18,5 @@ module.exports = {
     environment: process.env.PAYPAL_SANDBOX || 'Sandbox',
     clientId: process.env.PAYPAL_CLIENT_ID,
     secret: process.env.PAYPAL_SECRET,
-  },
-  aws: {
-    credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-      region: process.env.AWS_REGION || 'ap-southeast-1',
-    },
-  },
+  }
 };
