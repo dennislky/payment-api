@@ -4,12 +4,14 @@ export default class {
     ErrorCode,
     braintreeGateway,
     paypalGateway,
+    PaymentModel,
   }) {
     Object.assign(this, {
       APIError,
       ErrorCode,
       braintreeGateway,
       paypalGateway,
+      PaymentModel,
     });
   }
 
@@ -53,5 +55,65 @@ export default class {
         return next(err);
       }
     };
+  }
+
+  processPayment() {
+    return async (req, res, next) => {
+      try {
+        console.log(req.body);
+        const saleData = {
+          amount: req.body.price,
+          merchantAccountId: `Test-${req.body.currency}`,
+          paymentMethodNonce: req.body.nonce,
+          options: {
+            submitForSettlement: true,
+          },
+          customFields: {
+            customer_name: req.body.name,
+            customer_phone_number: req.body.phone,
+            currency: req.body.currency,
+            price: req.body.price,
+          },
+        }
+        console.log(saleData);
+        const transaction = await this.braintreeGateway.transaction.sale(saleData);
+        console.log(transaction.transaction.customFields);
+        if (!transaction.success) {
+          const err = new this.APIError(transaction.message, 500, this.ErrorCode.BRAINTREE_ERROR, true);
+          return next(err);
+        }
+        if (await this.paymentSuccessAction({ transaction })) {
+          return res.formatSend(200, transaction);
+        }
+
+        return res.formatSend(200, false);
+      } catch (e) {
+        console.log(e);
+        const err = new this.APIError('Fail to process braintree payment', 500, this.ErrorCode.BRAINTREE_ERROR, true);
+        return next(err);
+      }
+    };
+  }
+
+  async paymentSuccessAction({ transaction }) {
+    const paymentData = {
+      name: transaction.transaction.customFields.customerName,
+      phone: transaction.transaction.customFields.customerPhoneNumber,
+      currency: transaction.transaction.customFields.currency,
+      price: transaction.transaction.customFields.price,
+    };
+    console.log(paymentData);
+
+    try {
+      const payment = await this.PaymentModel.createPayment({
+        paymentData,
+      });
+      console.log(payment);
+    } catch (err) {
+      console.log(err);
+      return false;
+    }
+
+    return true;
   }
 }

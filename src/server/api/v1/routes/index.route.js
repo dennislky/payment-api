@@ -43,6 +43,7 @@ export default function ({
     ErrorCode,
     braintreeGateway,
     paypalGateway,
+    PaymentModel
   });
   const webhook = new WebhookClass({
     APIError,

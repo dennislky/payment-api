@@ -8,10 +8,7 @@ export default function ({
   const router = express.Router(); // eslint-disable-line new-cap
 
   router.route('/')
-    .post((req, res) => {
-      console.log(req.body);
-      res.send('OK');
-    });
+    .post(validate(ParamValidation.validatePayment), payment.processPayment());
 
   router.route('/makePaymentForm')
     .get(payment.getMakePaymentForm());
