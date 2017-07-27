@@ -19,21 +19,35 @@
       <input id="CVV" type="text" value="" name="CVV" placeholder="Credit Card CVV" ref="CVV">
     </fieldset> <!-- /.end set-2 -->
 
+    <modal v-if="isPaymentSuccess" @close="isPaymentSuccess = false">
+      <h3 slot="body">Your payment is successfully!<br><br>Here are your payment reference code: <br>\{{refCode}}</h3>
+    </modal>
+
+    <modal v-if="isPaymentFail" @close="isPaymentFail = false">
+      <h3 slot="body">Your payment failed! Please try again later!</h3>
+    </modal>
+
     <div class="wrapper">
-      <button type="submit" v-on:click="onSubmit">Make Payment</button>
+      <!-- <button id="show-modal" v-on:click="showModal = true">Show Modal</button> -->
+      <button type="submit" @click="onSubmit">Make Payment</button>
     </div>
   </form> <!-- /.end form -->
 </div>
 <script>
   (function(){
     var createClient = braintree.client.create;
+    Vue.component('modal', {
+      template: '#modal-template'
+    });
     var app = new Vue({
       el: '#app',
       data: {
         clientToken: '',
         currencies: ['HKD', 'USD', 'AUD', 'EUR', 'JPY', 'CNY'],
         currencySelected: '',
-        nonce: ''
+        isPaymentSuccess: false,
+        isPaymentFail: false,
+        refCode: ''
       },
       methods: {
         load: function() {
@@ -48,11 +62,9 @@
         },
         onCurrencyChange: function(e) {
           this.currencySelected = e.target.value
-          console.log(this.currencySelected)
         },
         onSubmit: function(e) {
           e.preventDefault()
-          createClient.bind(this)
           createClient({
             authorization: this.clientToken,
           }, function (createErr, clientInstance) {
@@ -66,7 +78,6 @@
                 }
               }
             };
-            console.log(data)
 
             // Warning: For a merchant to be eligible for the easiest level of PCI compliance (SAQ A),
             // payment fields cannot be hosted on your checkout page.
@@ -78,23 +89,26 @@
             }, function (requestErr, response) {
               // More detailed example of handling API errors: https://codepen.io/braintree/pen/MbwjdM
               if (requestErr) { throw new Error(requestErr); }
-              console.log('Got nonce:', response.creditCards[0].nonce);
-              this.nonce = response.creditCards[0].nonce
               const formData = {
                 name: document.getElementById('name').value,
                 phone: document.getElementById('phone').value,
                 currency: document.getElementById('currency').value,
                 price: document.getElementById('price').value,
-                nonce: this.nonce,
+                nonce: response.creditCards[0].nonce
               }
-              // console.log(JSON.stringify(formData))
-              Vue.http
+              this.$http
                 .post(`/v1/payment`, JSON.stringify(formData), {})
                 .then(res => {
-                  console.log(res)
+                  console.log(res.body)
+                  if (res.body.errorCode === 0 && res.body.data !== {}) {
+                    this.refCode = res.body.data.paymentRefCode
+                    this.isPaymentSuccess = true
+                  } else {
+                    this.isPaymentFail = true
+                  }
                 })
-            });
-          });
+            }.bind(this));
+          }.bind(this));
         }
       }
     });

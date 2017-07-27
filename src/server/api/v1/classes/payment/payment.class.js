@@ -60,7 +60,6 @@ export default class {
   processPayment() {
     return async (req, res, next) => {
       try {
-        console.log(req.body);
         const saleData = {
           amount: req.body.price,
           merchantAccountId: `Test-${req.body.currency}`,
@@ -75,20 +74,19 @@ export default class {
             price: req.body.price,
           },
         }
-        console.log(saleData);
         const transaction = await this.braintreeGateway.transaction.sale(saleData);
-        console.log(transaction.transaction.customFields);
         if (!transaction.success) {
           const err = new this.APIError(transaction.message, 500, this.ErrorCode.BRAINTREE_ERROR, true);
           return next(err);
         }
-        if (await this.paymentSuccessAction({ transaction })) {
-          return res.formatSend(200, transaction);
+        const paymentResult = await this.paymentSuccessAction({ transaction })
+        if (paymentResult) {
+          return res.formatSend(200, {
+            paymentRefCode: paymentResult.refCode
+          });
         }
-
-        return res.formatSend(200, false);
+        return res.formatSend(400, {});
       } catch (e) {
-        console.log(e);
         const err = new this.APIError('Fail to process braintree payment', 500, this.ErrorCode.BRAINTREE_ERROR, true);
         return next(err);
       }
@@ -101,6 +99,7 @@ export default class {
       phone: transaction.transaction.customFields.customerPhoneNumber,
       currency: transaction.transaction.customFields.currency,
       price: transaction.transaction.customFields.price,
+      refCode: transaction.transaction.id,
     };
     console.log(paymentData);
 
@@ -108,12 +107,10 @@ export default class {
       const payment = await this.PaymentModel.createPayment({
         paymentData,
       });
-      console.log(payment);
-    } catch (err) {
-      console.log(err);
-      return false;
-    }
 
-    return true;
+      return paymentData;
+    } catch (err) {
+      return null;
+    }
   }
 }

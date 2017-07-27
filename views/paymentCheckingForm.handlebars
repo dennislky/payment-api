@@ -1,39 +1,31 @@
 <div id="app">
   <form method="post"> <!--- form --->
     <fieldset> <!--- set-1 -->
-      <legend>Order</legend>
+      <legend>Payment Record</legend>
       <input id="name" type="text" value="" name="name" placeholder="Customer Name" ref="name">
-      <input id="phone" type="text" value="" name="phone" placeholder="Customer Phone Number" ref="phone">
-      <select id="currency" class="primary select-img" name="currency" v-on:change="onCurrencyChange" v-model="currencySelected">
-        <option disabled value="">Please choose a currency</option>
-        <option v-for="item in currencies" v-bind:value="item">\{{item}}</option>
-      </select>
-      <input id="price" type="text" value="" name="price" placeholder="Price" ref="price">
+      <input id="refCode" type="text" value="" name="refCode" placeholder="Payment Reference Code" ref="refCode">
     </fieldset> <!-- /.end set-1 -->
 
-    <fieldset> <!--- set-2 -->
-      <legend>Payment</legend>
-      <input id="creditCardName" type="text" value="" name="creditCardName" placeholder="Credit Card Holder Name" ref="creditCardName">
-      <input id="creditCardNumber" type="text" value="" name="creditCardNumber" placeholder="Credit Card Number" ref="creditCardNumber">
-      <input id="creditCardExp" type="text" value="" name="creditCardExp" placeholder="Credit Card Expiration" ref="creditCardExp">
-      <input id="CVV" type="text" value="" name="CVV" placeholder="Credit Card CVV" ref="CVV">
-    </fieldset> <!-- /.end set-2 -->
+    <modal v-if="isPaymentNotFound" @close="isPaymentNotFound = false">
+      <h3 slot="body">Record not found!</h3>
+    </modal>
 
     <div class="wrapper">
-      <button type="submit" v-on:click="onSubmit">Make Payment</button>
+      <button type="submit" v-on:click="onSubmit">Check Payment Record</button>
     </div>
   </form> <!-- /.end form -->
 </div>
 <script>
   (function(){
     var createClient = braintree.client.create;
+    Vue.component('modal', {
+      template: '#modal-template'
+    });
     var app = new Vue({
       el: '#app',
       data: {
         clientToken: '',
-        currencies: ['HKD', 'USD', 'AUD', 'EUR', 'JPY', 'CNY'],
-        currencySelected: '',
-        nonce: ''
+        isPaymentNotFound: false
       },
       methods: {
         load: function() {
@@ -46,13 +38,8 @@
               this.clientToken = res.data.data.clientToken
             });
         },
-        onCurrencyChange: function(e) {
-          this.currencySelected = e.target.value
-          console.log(this.currencySelected)
-        },
         onSubmit: function(e) {
           e.preventDefault()
-          createClient.bind(this)
           createClient({
             authorization: this.clientToken,
           }, function (createErr, clientInstance) {
@@ -66,7 +53,6 @@
                 }
               }
             };
-            console.log(data)
 
             // Warning: For a merchant to be eligible for the easiest level of PCI compliance (SAQ A),
             // payment fields cannot be hosted on your checkout page.
@@ -78,23 +64,26 @@
             }, function (requestErr, response) {
               // More detailed example of handling API errors: https://codepen.io/braintree/pen/MbwjdM
               if (requestErr) { throw new Error(requestErr); }
-              console.log('Got nonce:', response.creditCards[0].nonce);
-              this.nonce = response.creditCards[0].nonce
               const formData = {
                 name: document.getElementById('name').value,
                 phone: document.getElementById('phone').value,
                 currency: document.getElementById('currency').value,
                 price: document.getElementById('price').value,
-                nonce: this.nonce,
+                nonce: response.creditCards[0].nonce
               }
-              // console.log(JSON.stringify(formData))
-              Vue.http
+              this.$http
                 .post(`/v1/payment`, JSON.stringify(formData), {})
                 .then(res => {
-                  console.log(res)
+                  console.log(res.body)
+                  if (res.body.errorCode === 0 && res.body.data !== {}) {
+                    this.refCode = res.body.data.paymentRefCode
+                    this.isPaymentNotFound = true
+                  } else {
+                    this.isPaymentNotFound = true
+                  }
                 })
-            });
-          });
+            }.bind(this));
+          }.bind(this));
         }
       }
     });

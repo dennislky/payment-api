@@ -22,6 +22,10 @@ export default function({
       type: Number,
       required: true,
     },
+    refCode: {
+      type: String,
+      required: true,
+    },
     createdAt: {
       type: Date,
       default: Date.now,
@@ -72,6 +76,7 @@ export default function({
         'phone',
         'currency',
         'price',
+        'refCode',
       ]);
 
       const payment = new this(paymentObj);
