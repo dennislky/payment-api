@@ -4,6 +4,7 @@ import fetch from 'node-fetch';
 import validate from 'express-validation';
 
 import braintree from 'braintree';
+import redis from 'ioredis';
 
 import HttpServer from './server/httpServer';
 import APIError from './APIError';
@@ -34,16 +35,23 @@ const braintreeGateway = braintree.connect({
 
 const paypalGateway = ''
 
+const redisClient = redis.createClient(config.get('redis.url'))
+const RedisPrefix = config.get('redis.prefix')
+const RedisCacheDuration = config.get('redis.cacheDuration')
+
 const httpServer = new HttpServer({
   config,
   mongoose,
   braintreeGateway,
   paypalGateway,
+  redisClient,
   fetch,
   validate,
   APIError,
   ErrorCode,
   ParamValidation,
+  RedisPrefix,
+  RedisCacheDuration,
 });
 
 httpServer.start();

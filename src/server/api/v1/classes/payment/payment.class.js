@@ -2,15 +2,21 @@ export default class {
   constructor({
     APIError,
     ErrorCode,
+    RedisPrefix,
+    RedisCacheDuration,
     braintreeGateway,
     paypalGateway,
+    redisClient,
     PaymentModel,
   }) {
     Object.assign(this, {
       APIError,
       ErrorCode,
+      RedisPrefix,
+      RedisCacheDuration,
       braintreeGateway,
       paypalGateway,
+      redisClient,
       PaymentModel,
     });
   }
@@ -107,7 +113,6 @@ export default class {
       const payment = await this.PaymentModel.createPayment({
         paymentData,
       });
-
       return paymentData;
     } catch (err) {
       return null;
@@ -117,13 +122,22 @@ export default class {
   checkPayment() {
     return async (req, res, next) => {
       try {
-        const transaction = await this.braintreeGateway.transaction.find(req.body.refCode);
-        return res.formatSend(200, {
-          name: transaction.customFields.customerName,
-          phone: transaction.customFields.customerPhoneNumber,
-          currency: transaction.customFields.currency,
-          price: transaction.customFields.price,
-        });
+        const key = `${this.RedisPrefix}:paymentRecord:${req.body.refCode}`
+        const keys = await this.redisClient.exists(key)
+        if (keys === 0) {
+          const transaction = await this.braintreeGateway.transaction.find(req.body.refCode);
+          const data = {
+            name: transaction.customFields.customerName,
+            phone: transaction.customFields.customerPhoneNumber,
+            currency: transaction.customFields.currency,
+            price: transaction.customFields.price,
+          }
+          await this.redisClient.setex(`${this.RedisPrefix}:paymentRecord:${req.body.refCode}`, this.RedisCacheDuration, JSON.stringify(data))
+          return res.formatSend(200, data);
+        }
+        const paymentRecordCache = await this.redisClient.get(key)
+        const data = JSON.parse(paymentRecordCache)
+        return res.formatSend(200, data)
       } catch (e) {
         return res.formatSend(200, {}, this.ErrorCode.PAYMENT_RECORD_NOT_FOUND.code, this.ErrorCode.PAYMENT_RECORD_NOT_FOUND.message);
       }

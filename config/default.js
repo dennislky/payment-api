@@ -18,5 +18,10 @@ module.exports = {
     environment: process.env.PAYPAL_SANDBOX || 'Sandbox',
     clientId: process.env.PAYPAL_CLIENT_ID,
     secret: process.env.PAYPAL_SECRET,
-  }
+  },
+  redis: {
+    url: process.env.REDIS_URL,
+    prefix: process.env.REDIS_PREFIX,
+    cacheDuration: process.env.REDIS_CACHE_DURATION,
+  },
 };

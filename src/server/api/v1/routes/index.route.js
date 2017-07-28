@@ -21,11 +21,14 @@ export default function ({
   express,
   braintreeGateway,
   paypalGateway,
+  redisClient,
   fetch,
   validate,
   APIError,
   ErrorCode,
   ParamValidation,
+  RedisPrefix,
+  RedisCacheDuration,
 }) {
   const router = express.Router(); // eslint-disable-line new-cap
 
@@ -41,8 +44,11 @@ export default function ({
   const payment = new PaymentClass({
     APIError,
     ErrorCode,
+    RedisPrefix,
+    RedisCacheDuration,
     braintreeGateway,
     paypalGateway,
+    redisClient,
     PaymentModel
   });
   const webhook = new WebhookClass({

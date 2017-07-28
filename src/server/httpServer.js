@@ -17,22 +17,28 @@ export default class {
     mongoose,
     braintreeGateway,
     paypalGateway,
+    redisClient,
     fetch,
     validate,
     APIError,
     ErrorCode,
     ParamValidation,
+    RedisPrefix,
+    RedisCacheDuration,
   }) {
     Object.assign(this, {
       config,
       mongoose,
       braintreeGateway,
       paypalGateway,
+      redisClient,
       fetch,
       validate,
       APIError,
       ErrorCode,
       ParamValidation,
+      RedisPrefix,
+      RedisCacheDuration,
     });
 
     const app = express();
@@ -77,11 +83,14 @@ export default class {
       express,
       braintreeGateway,
       paypalGateway,
+      redisClient,
       fetch,
       validate,
       APIError,
       ErrorCode,
       ParamValidation,
+      RedisPrefix,
+      RedisCacheDuration,
     });
 
     app.use('/v1', v1);
