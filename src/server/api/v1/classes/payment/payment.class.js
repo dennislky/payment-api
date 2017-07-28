@@ -113,4 +113,20 @@ export default class {
       return null;
     }
   }
+
+  checkPayment() {
+    return async (req, res, next) => {
+      try {
+        const transaction = await this.braintreeGateway.transaction.find(req.body.refCode);
+        return res.formatSend(200, {
+          name: transaction.customFields.customerName,
+          phone: transaction.customFields.customerPhoneNumber,
+          currency: transaction.customFields.currency,
+          price: transaction.customFields.price,
+        });
+      } catch (e) {
+        return res.formatSend(200, {}, this.ErrorCode.PAYMENT_RECORD_NOT_FOUND.code, this.ErrorCode.PAYMENT_RECORD_NOT_FOUND.message);
+      }
+    };
+  }
 }

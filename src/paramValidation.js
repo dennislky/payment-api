@@ -10,4 +10,11 @@ export default {
       price: Joi.number().required(),
     },
   },
+
+  validateCheckPayment: {
+    body: {
+      name: Joi.string().required(),
+      refCode: Joi.string().required(),
+    },
+  },
 };

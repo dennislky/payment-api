@@ -58,7 +58,7 @@
             .get(`/v1/payment/clientToken`, {})
             .then(res => {
               this.clientToken = res.data.data.clientToken
-            });
+            })
         },
         onCurrencyChange: function(e) {
           this.currencySelected = e.target.value
@@ -68,6 +68,7 @@
           createClient({
             authorization: this.clientToken,
           }, function (createErr, clientInstance) {
+            if (createErr) { throw new Error(createErr); }
             var data = {
               creditCard: {
                 number: document.getElementById('creditCardNumber').value,
@@ -107,6 +108,7 @@
                     this.isPaymentFail = true
                   }
                 })
+                .catch(err => console.log(err))
             }.bind(this));
           }.bind(this));
         }

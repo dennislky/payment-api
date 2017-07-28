@@ -10,6 +10,9 @@ export default function ({
   router.route('/')
     .post(validate(ParamValidation.validatePayment), payment.processPayment());
 
+  router.route('/checkPayment')
+    .post(validate(ParamValidation.validateCheckPayment), payment.checkPayment());
+
   router.route('/makePaymentForm')
     .get(payment.getMakePaymentForm());
 

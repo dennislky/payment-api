@@ -6,6 +6,22 @@
       <input id="refCode" type="text" value="" name="refCode" placeholder="Payment Reference Code" ref="refCode">
     </fieldset> <!-- /.end set-1 -->
 
+    <modal v-if="isPaymentFound" @close="isPaymentFound = false">
+      <h3 slot="body">
+        Your payment is found!<br>
+        <br>
+        Here are your payment details: <br>
+        <br>
+        Customer Name: \{{name}}<br>
+        <br>
+        Customer Phone Number: \{{phone}}<br>
+        <br>
+        Currency: \{{currency}}<br>
+        <br>
+        Price: \{{price}}
+      </h3>
+    </modal>
+
     <modal v-if="isPaymentNotFound" @close="isPaymentNotFound = false">
       <h3 slot="body">Record not found!</h3>
     </modal>
@@ -24,69 +40,33 @@
     var app = new Vue({
       el: '#app',
       data: {
-        clientToken: '',
-        isPaymentNotFound: false
+        isPaymentNotFound: false,
+        isPaymentFound: false,
       },
       methods: {
-        load: function() {
-          this.getClientToken()
-        },
-        getClientToken: function() {
-          this.$http
-            .get(`/v1/payment/clientToken`, {})
-            .then(res => {
-              this.clientToken = res.data.data.clientToken
-            });
-        },
         onSubmit: function(e) {
           e.preventDefault()
-          createClient({
-            authorization: this.clientToken,
-          }, function (createErr, clientInstance) {
-            var data = {
-              creditCard: {
-                number: document.getElementById('creditCardNumber').value,
-                cvv: document.getElementById('CVV').value,
-                expirationDate: document.getElementById('creditCardExp').value,
-                options: {
-                  validate: true
-                }
+          const formData = {
+            name: document.getElementById('name').value,
+            refCode: document.getElementById('refCode').value,
+          }
+          this.$http
+            .post(`/v1/payment/checkPayment`, JSON.stringify(formData), {})
+            .then(res => {
+              console.log(res.body)
+              if (res.body.errorCode === 0 && res.body.data !== {}) {
+                this.name = res.body.data.name
+                this.phone = res.body.data.phone
+                this.currency = res.body.data.currency
+                this.price = res.body.data.price
+                this.isPaymentFound = true
+              } else {
+                this.isPaymentNotFound = true
               }
-            };
-
-            // Warning: For a merchant to be eligible for the easiest level of PCI compliance (SAQ A),
-            // payment fields cannot be hosted on your checkout page.
-            // For an alternative to the following, use Hosted Fields.
-            clientInstance.request({
-              endpoint: 'payment_methods/credit_cards',
-              method: 'post',
-              data: data
-            }, function (requestErr, response) {
-              // More detailed example of handling API errors: https://codepen.io/braintree/pen/MbwjdM
-              if (requestErr) { throw new Error(requestErr); }
-              const formData = {
-                name: document.getElementById('name').value,
-                phone: document.getElementById('phone').value,
-                currency: document.getElementById('currency').value,
-                price: document.getElementById('price').value,
-                nonce: response.creditCards[0].nonce
-              }
-              this.$http
-                .post(`/v1/payment`, JSON.stringify(formData), {})
-                .then(res => {
-                  console.log(res.body)
-                  if (res.body.errorCode === 0 && res.body.data !== {}) {
-                    this.refCode = res.body.data.paymentRefCode
-                    this.isPaymentNotFound = true
-                  } else {
-                    this.isPaymentNotFound = true
-                  }
-                })
-            }.bind(this));
-          }.bind(this));
+            })
+            .catch(err => console.log(err))
         }
       }
     });
-    app.load();
   })()
 </script>
