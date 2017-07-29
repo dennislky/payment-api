@@ -33,7 +33,7 @@ const braintreeGateway = braintree.connect({
   privateKey: config.get('braintree.privateKey'),
 });
 
-const paypalGateway = ''
+const PaypalConfig = config.get('paypal')
 
 const redisClient = redis.createClient(config.get('redis.url'))
 const RedisPrefix = config.get('redis.prefix')
@@ -43,7 +43,6 @@ const httpServer = new HttpServer({
   config,
   mongoose,
   braintreeGateway,
-  paypalGateway,
   redisClient,
   fetch,
   validate,
@@ -52,6 +51,7 @@ const httpServer = new HttpServer({
   ParamValidation,
   RedisPrefix,
   RedisCacheDuration,
+  PaypalConfig,
 });
 
 httpServer.start();

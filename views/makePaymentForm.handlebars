@@ -55,7 +55,7 @@
         },
         getClientToken: function() {
           this.$http
-            .get(`/v1/payment/clientToken`, {})
+            .get(`/v1/payment/braintreeClientToken`, {})
             .then(res => {
               this.clientToken = res.data.data.clientToken
             })

@@ -6,13 +6,11 @@ import {
 // payment classes
 import {
   PaymentClass,
-  WebhookClass,
 } from '../classes/payment';
 
 // payment routes
 import {
   PaymentRoutes,
-  WebhookRoutes,
 } from '../routes/payment';
 
 export default function ({
@@ -20,7 +18,6 @@ export default function ({
   mongoose,
   express,
   braintreeGateway,
-  paypalGateway,
   redisClient,
   fetch,
   validate,
@@ -29,6 +26,7 @@ export default function ({
   ParamValidation,
   RedisPrefix,
   RedisCacheDuration,
+  PaypalConfig,
 }) {
   const router = express.Router(); // eslint-disable-line new-cap
 
@@ -46,16 +44,10 @@ export default function ({
     ErrorCode,
     RedisPrefix,
     RedisCacheDuration,
+    PaypalConfig,
+    fetch,
     braintreeGateway,
-    paypalGateway,
     redisClient,
-    PaymentModel
-  });
-  const webhook = new WebhookClass({
-    APIError,
-    ErrorCode,
-    braintreeGateway,
-    paypalGateway,
     PaymentModel
   });
 
@@ -65,15 +57,8 @@ export default function ({
     ParamValidation,
     payment,
   });
-  const webhookR = new WebhookRoutes({
-    express,
-    validate,
-    ParamValidation,
-    webhook,
-  });
 
   router.use('/payment', paymentR);
-  router.use('/webhook', webhookR);
 
   return router;
 }

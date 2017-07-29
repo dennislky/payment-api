@@ -4,24 +4,24 @@ module.exports = {
     code: 0,
     message: 'success',
   },
-  NOT_FOUND: {
+  MAKE_PAYMENT_FORM_ERROR: {
     code: -1,
-    message: 'data not found',
+    message: 'Make payment form error',
+  },
+  PAYMENT_CHECKING_FORM_ERROR: {
+    code: -2,
+    message: 'Payment checking form error',
   },
   PAYMENT_RECORD_NOT_FOUND: {
-    code: -18,
+    code: -3,
     message: '找不到付費紀錄',
   },
   BRAINTREE_ERROR: {
-    code: -19,
-    message: 'braintree error',
+    code: -4,
+    message: 'Braintree error',
   },
-  MAKE_PAYMENT_FORM_ERROR: {
-    code: -20,
-    message: 'make payment form error',
-  },
-  PAYMENT_CHECKING_FORM_ERROR: {
-    code: -21,
-    message: 'payment checking form error',
+  PAYPAL_ERROR: {
+    code: -5,
+    message: 'Paypal error',
   },
 };

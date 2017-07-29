@@ -19,8 +19,8 @@ export default function ({
   router.route('/paymentCheckingForm')
     .get(payment.getPaymentCheckingForm());
 
-  router.route('/clientToken')
-    .get(payment.genClientToken());
+  router.route('/braintreeClientToken')
+    .get(payment.genBraintreeClientToken());
 
   return router;
 }
