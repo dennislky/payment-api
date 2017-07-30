@@ -65,7 +65,7 @@ export default function({
           if (payment) {
             return payment;
           }
-          const err = new APIError('Payment record not found', 404, ErrorCode.NOT_FOUND, true);
+          const err = new APIError('Payment record not found', 404, ErrorCode.PAYMENT_RECORD_NOT_FOUND, true);
           return Promise.reject(err);
         });
     },
@@ -87,7 +87,7 @@ export default function({
           if (result) {
             return result;
           }
-          const err = new APIError('Fail to create payment', 500, ErrorCode.NOT_FOUND, true);
+          const err = new APIError('Fail to create payment', 500, ErrorCode.PAYMENT_RECORD_CREATE_ERROR, true);
           return Promise.reject(err);
         })
         .catch(err => Promise.reject(err));
@@ -103,7 +103,7 @@ export default function({
           if (payments) {
             return payments;
           }
-          const err = new APIError('Fetch payment list error', 500, ErrorCode.NOT_FOUND, true);
+          const err = new APIError('Fetch payment list error', 404, ErrorCode.PAYMENT_RECORD_NOT_FOUND, true);
           return Promise.reject(err);
         })
         .catch(err => Promise.reject(err));
@@ -116,7 +116,7 @@ export default function({
           if (status.ok === 1 && status.nModified === 1) {
             return true;
           }
-          const err = new APIError('Cannot update payment', 500, ErrorCode.NOT_FOUND, true);
+          const err = new APIError('Cannot update payment', 500, ErrorCode.PAYMENT_RECORD_UPDATE_ERROR, true);
           return Promise.reject(err);
         });
     },

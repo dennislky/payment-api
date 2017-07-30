@@ -8,6 +8,11 @@ export default {
       // currency: Joi.string().regex(/^(HKD,USD,AUD,EUR,JPY,CNY){1}$/).required(),
       currency: Joi.string().required(),
       price: Joi.number().required(),
+      nonce: Joi.string().required(),
+      cardType: Joi.string().required(),
+      number: Joi.number().required(),
+      cvv: Joi.number().required(),
+      expirationDate: Joi.string().required(),
     },
   },
 

@@ -24,7 +24,7 @@
     </modal>
 
     <modal v-if="isPaymentFail" @close="isPaymentFail = false">
-      <h3 slot="body">Your payment failed! Please try again later!</h3>
+      <h3 slot="body">\{{errorMessage}}</h3>
     </modal>
 
     <div class="wrapper">
@@ -47,7 +47,8 @@
         currencySelected: '',
         isPaymentSuccess: false,
         isPaymentFail: false,
-        refCode: ''
+        refCode: '',
+        errorMessage: ''
       },
       methods: {
         load: function() {
@@ -75,7 +76,7 @@
                 cvv: document.getElementById('CVV').value,
                 expirationDate: document.getElementById('creditCardExp').value,
                 options: {
-                  validate: true
+                  validate: false
                 }
               }
             };
@@ -95,7 +96,11 @@
                 phone: document.getElementById('phone').value,
                 currency: document.getElementById('currency').value,
                 price: document.getElementById('price').value,
-                nonce: response.creditCards[0].nonce
+                nonce: response.creditCards[0].nonce,
+                cardType: response.creditCards[0].details.cardType,
+                number: data.creditCard.number,
+                cvv: data.creditCard.cvv,
+                expirationDate: data.creditCard.expirationDate,
               }
               this.$http
                 .post(`/v1/payment`, JSON.stringify(formData), {})
@@ -105,6 +110,7 @@
                     this.refCode = res.body.data.paymentRefCode
                     this.isPaymentSuccess = true
                   } else {
+                    this.errorMessage = res.body.errorMsg
                     this.isPaymentFail = true
                   }
                 })

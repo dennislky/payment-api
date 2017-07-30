@@ -83,12 +83,56 @@ export default class {
         const info = await result.json()
         return info.access_token
       } else {
-        return null
+        const err = new this.APIError('Fail to generate paypal access token', 500, this.ErrorCode.PAYPAL_ERROR, true);
+        return next(err);
       }
-    } catch (err) {
-      console.log(err)
-      return null
+    } catch (e) {
+      const err = new this.APIError('Fail to generate paypal access token', 500, this.ErrorCode.BRAINTREE_ERROR, true);
+      return next(err);
     }
+  }
+
+  convertCardType(cardType) {
+    if (cardType === 'Visa') {
+      return 'visa'
+    } else if (cardType === 'Mastercard') {
+      return 'mastercard'
+    } else if (cardType === 'American Express') {
+      return 'amex'
+    } else if (cardType === 'JCB') {
+      return 'jcb'
+    } else if (cardType === 'Discover') {
+      return 'discover'
+    } else {
+      return ''
+    }
+  }
+
+  processPayment() {
+    return async (req, res, next) => {
+      try {
+        let paymentResult
+        const cardShortType = this.convertCardType(req.body.cardType)
+        const currency = req.body.currency
+        if (cardShortType === 'amex' || currency === 'USD' || currency === 'EUR' || currency === 'AUD') {
+          if (cardShortType === 'amex' && currency !== 'USD') {
+            return res.formatSend(200, {}, this.ErrorCode.AMEX_CURRENCY_ERROR.code, this.ErrorCode.AMEX_CURRENCY_ERROR.message)
+          }
+          paymentResult = await this.processPaypalPayment(req)
+        } else {
+          paymentResult = await this.processBraintreePayment(req)
+        }
+        if (paymentResult) {
+          return res.formatSend(200, {
+            paymentRefCode: paymentResult.refCode
+          })
+        }
+        return res.formatSend(200, {}, this.ErrorCode.PAYMENT_RECORD_CREATE_ERROR.code, this.ErrorCode.PAYMENT_RECORD_CREATE_ERROR.message)
+      } catch (e) {
+        // return next(e);
+        return res.formatSend(200, {}, e.errorCode.code, e.errorCode.message)
+      }
+    };
   }
 
   async processBraintreePayment(req) {
@@ -122,19 +166,24 @@ export default class {
 
   async processPaypalPayment(req) {
     try {
-      const paypalAccessToken = await this.genPaypalAccessToken();
-      console.log(paypalAccessToken)
+      const paypalAccessToken = await this.genPaypalAccessToken()
+      const customerData = {
+        customer_name: req.body.name,
+        customer_phone_number: req.body.phone,
+        currency: req.body.currency,
+        price: req.body.price,
+      }
       const saleData = {
         intent: 'sale',
         payer: {
           payment_method: 'credit_card',
           funding_instruments: [{
             credit_card: {
-              number: '4111111111111111',
-              type: 'visa',
-              expire_month: '11',
-              expire_year: '2018',
-              cvv2: '874'
+              number: req.body.number,
+              type: this.convertCardType(req.body.cardType),
+              expire_month: req.body.expirationDate.split('/')[0],
+              expire_year: '20'+req.body.expirationDate.split('/')[1],
+              cvv2: req.body.cvv,
             }
           }]
         },
@@ -145,51 +194,25 @@ export default class {
           }
         }]
       }
-      console.log(JSON.stringify(saleData))
       const result = await this.fetch(this.PaypalConfig.domain+'/v1/payments/payment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer '+paypalAccessToken,
         },
-        body: saleData,
+        body: JSON.stringify(saleData),
       })
-      console.log(result)
       if (result.ok) {
         const transaction = await result.json()
-        return transaction
-      } else {
-        const err = new this.APIError(result.statusText, 500, this.ErrorCode.PAYPAL_ERROR, true);
-        return Promise.reject(err);
+        const paymentResult = await this.paypalPaymentSuccessAction({ customerData, transaction })
+        return paymentResult
       }
+      const err = new this.APIError(result.statusText, 500, this.ErrorCode.PAYPAL_ERROR, true);
+      return Promise.reject(err);
     } catch (e) {
-      console.log(e);
       const err = new this.APIError('Fail to process paypal payment', 500, this.ErrorCode.PAYPAL_ERROR, true);
       return Promise.reject(err);
     }
-  }
-
-  processPayment() {
-    return async (req, res, next) => {
-      try {
-        // const paypalPaymentResult = await this.processPaypalPayment(req)
-        // if (paypalPaymentResult) {
-        //   return res.formatSend(200, {
-        //     paymentRefCode: paypalPaymentResult.id
-        //   });
-        // }
-        // return res.formatSend(400, {});
-        const braintreePaymentResult = await this.processBraintreePayment(req)
-        if (braintreePaymentResult) {
-          return res.formatSend(200, {
-            paymentRefCode: braintreePaymentResult.refCode
-          });
-        }
-        return res.formatSend(400, {});
-      } catch (e) {
-        return next(e);
-      }
-    };
   }
 
   async braintreePaymentSuccessAction({ transaction }) {
@@ -213,18 +236,40 @@ export default class {
     }
   }
 
+  async paypalPaymentSuccessAction({ customerData, transaction }) {
+    const paymentData = {
+      name: customerData.customer_name,
+      phone: customerData.customer_phone_number,
+      currency: customerData.currency,
+      price: customerData.price,
+      refCode: transaction.id,
+    };
+    console.log(paymentData);
+
+    try {
+      const payment = await this.PaymentModel.createPayment({
+        paymentData,
+      });
+      return paymentData;
+    } catch (err) {
+      console.log(err);
+      return null;
+    }
+  }
+
   checkPayment() {
     return async (req, res, next) => {
       try {
         const key = `${this.RedisPrefix}:paymentRecord:${req.body.refCode}`
         const keys = await this.redisClient.exists(key)
         if (keys === 0) {
-          const transaction = await this.braintreeGateway.transaction.find(req.body.refCode);
+          // const transaction = await this.braintreeGateway.transaction.find(req.body.refCode);
+          const record = await this.PaymentModel.detail({ filter: { name: req.body.name, refCode: req.body.refCode} })
           const data = {
-            name: transaction.customFields.customerName,
-            phone: transaction.customFields.customerPhoneNumber,
-            currency: transaction.customFields.currency,
-            price: transaction.customFields.price,
+            name: record.name,
+            phone: record.phone,
+            currency: record.currency,
+            price: record.price,
           }
           await this.redisClient.setex(`${this.RedisPrefix}:paymentRecord:${req.body.refCode}`, this.RedisCacheDuration, JSON.stringify(data))
           return res.formatSend(200, data);
