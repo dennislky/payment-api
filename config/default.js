@@ -1,11 +1,11 @@
 
 module.exports = {
-  env: process.env.NODE_ENV,
+  env: process.env.NODE_ENV || 'dev',
   mongoose: {
-    url: process.env.MONGODB_URL,
+    url: process.env.MONGODB_URL, // '<username>:<password>@<url>:<port>/<table>?ssl=true'
   },
   server: {
-    port: process.env.PORT,
+    port: process.env.PORT || 8084,
   },
   braintree: {
     environment: process.env.BRAINTREE_SANDBOX || 'Sandbox',
@@ -15,14 +15,14 @@ module.exports = {
     merchantAccountId: process.env.BRAINTREE_MERCHANT_ACCOUNT_ID,
   },
   paypal: {
-    environment: process.env.PAYPAL_SANDBOX || 'Sandbox',
+    environment: process.env.PAYPAL_SANDBOX || 'sandbox',
     clientId: process.env.PAYPAL_CLIENT_ID,
     secret: process.env.PAYPAL_SECRET,
-    domain: process.env.PAYPAL_DOMAIN,
+    domain: process.env.PAYPAL_DOMAIN || 'https://api.sandbox.paypal.com',
   },
   redis: {
-    url: process.env.REDIS_URL,
+    url: process.env.REDIS_URL, // 'redis://<url>:6379'
     prefix: process.env.REDIS_PREFIX,
-    cacheDuration: process.env.REDIS_CACHE_DURATION,
+    cacheDuration: process.env.REDIS_CACHE_DURATION || 60,
   },
 };
